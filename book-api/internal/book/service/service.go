@@ -3,6 +3,9 @@ package service
 import (
 	"book-api/internal/book/domain"
 	"errors"
+	"io"
+	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 )
@@ -123,4 +126,31 @@ func (s *BookService) GetBooks(page int, limit int) ([]domain.Book, int, error) 
 
 	return paginatedBooks, totalItems, nil
 
+}
+
+// upload book Cover
+func (s *BookService) UploadBookCover(bookID string, file domain.FileUploadReq) (string, error) {
+	// Define a target directory on your machine
+	uploadDir := "./uploads/covers"
+
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	// Create the blank destination file locally
+	filePath := filepath.Join(uploadDir, bookID+"-"+file.FileName)
+	dstFile, err := os.Create(filePath)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer dstFile.Close()
+
+	// Stream copy the bytes straight out of the request payload onto the disk
+	if _, err := io.Copy(dstFile, file.Content); err != nil {
+		return "", err
+	}
+
+	return filePath, nil
 }

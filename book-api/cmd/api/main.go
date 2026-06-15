@@ -22,6 +22,7 @@ func main() {
 	r.POST("/books", bookHandler.CreateBook)
 	r.PUT("/books/:id", bookHandler.UpdateBook)
 	r.DELETE("/books/:id", bookHandler.DeleteBook)
+	r.POST("/books/:id/upload-cover", bookHandler.UploadCover)
 
 	// Fire up the server
 	r.Run(":9090")

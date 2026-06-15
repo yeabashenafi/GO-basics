@@ -99,3 +99,41 @@ func (h *HTTPHandler) GetBooks(c *gin.Context) {
 		"total": total,
 	})
 }
+
+// POST /books/:id/cover
+func (h *HTTPHandler) UploadCover(c *gin.Context) {
+	bookID := c.Param("id")
+
+	// 1. "coverImage" is the key matching the form-data key sent by the client
+	fileHeader, err := c.FormFile("coverImage")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no file found in request payload"})
+		return
+	}
+
+	// open the file to safely read its stream contents
+	fileStream, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file payload"})
+		return
+	}
+
+	// package it for the service layer
+	req := domain.FileUploadReq{
+		FileName: fileHeader.Filename,
+		Size:     fileHeader.Size,
+		Content:  fileStream,
+	}
+
+	// send it to the service layer
+	url, err := h.service.UploadBookCover(bookID, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":   "File uploaded successfully",
+		"image_url": url,
+	})
+}
